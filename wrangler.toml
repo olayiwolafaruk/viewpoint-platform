@@ -10,5 +10,5 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "viewpoint-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "fe937198-5094-4136-b158-9342c1f4f047"
 migrations_dir = "drizzle"
