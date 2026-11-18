@@ -142,3 +142,9 @@ export const walletLedger = sqliteTable('wallet_ledger', {
   idempotencyKey: text('idempotency_key').notNull(),
   createdAt: integer('created_at').notNull().default(now),
 }, t => [uniqueIndex('ledger_idempotency_unique').on(t.idempotencyKey), index('ledger_user_idx').on(t.userId,t.createdAt), check('ledger_kind_check', sql`${t.kind} in ('deposit_credit','campaign_funding','campaign_reallocation','task_reward','install_reward','redemption_reserve','redemption_refund')`), check('ledger_amount_check', sql`typeof(${t.amountKobo}) = 'integer' and ${t.amountKobo} between -9007199254740991 and 9007199254740991 and ${t.amountKobo} != 0`)]);
+
+export const authRateLimits = sqliteTable('auth_rate_limits', {
+  key: text('key').primaryKey().notNull(),
+  windowStart: integer('window_start').notNull(),
+  attempts: integer('attempts').notNull(),
+}, t => [check('auth_rate_attempts_check', sql`${t.attempts} >= 1`)]);
