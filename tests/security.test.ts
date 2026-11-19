@@ -16,3 +16,26 @@ test('password hashing verifies correct password and rejects incorrect and malfo
 test('Turnstile fails closed without required configuration', async () => {
  assert.deepEqual(await verifyTurnstile({token:'',secret:'',expectedHostname:'',expectedAction:''}), {ok:false,reason:'invalid'});
 });
+
+test('Turnstile checks hostname and action and fails closed on errors', async () => {
+ const original = globalThis.fetch;
+ const options = {token:'token',secret:'secret',expectedHostname:'earn.example.com',expectedAction:'login'};
+ try {
+  globalThis.fetch = async () => Response.json({success:true,hostname:'earn.example.com',action:'login'});
+  assert.deepEqual(await verifyTurnstile(options),{ok:true});
+  globalThis.fetch = async () => Response.json({success:true,hostname:'other.example.com',action:'login'});
+  assert.deepEqual(await verifyTurnstile(options),{ok:false,reason:'invalid'});
+  globalThis.fetch = async () => Response.json({success:true,hostname:'earn.example.com',action:'register'});
+  assert.deepEqual(await verifyTurnstile(options),{ok:false,reason:'invalid'});
+  globalThis.fetch = async () => {throw new Error('network error')};
+  assert.deepEqual(await verifyTurnstile(options),{ok:false,reason:'unavailable'});
+ } finally { globalThis.fetch = original; }
+});
+
+test('request body reader rejects oversized content even without content-length', async () => {
+ const { readLimitedBody } = await import('../src/lib/security/request');
+ const valid = new Request('https://example.com', {method:'POST',body:'abc'});
+ assert.equal(await readLimitedBody(valid,3),'abc');
+ const large = new Request('https://example.com', {method:'POST',body:'abcd'});
+ assert.equal(await readLimitedBody(large,3),null);
+});
